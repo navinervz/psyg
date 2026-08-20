@@ -1,0 +1,4 @@
+{
+  "//": "فقط برای اینکه Node فایل‌های تست را ESM بداند و هشدار MODULE_TYPELESS_PACKAGE_JSON ندهد. عمداً به package.json اصلی type:module اضافه نشده تا پیکربندی Next دست‌نخورده بماند.",
+  "type": "module"
+}

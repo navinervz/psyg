@@ -1,0 +1,41 @@
+# ─── وابستگی‌ها و خروجی بیلد ───
+node_modules/
+.next/
+out/
+build/
+.turbo/
+
+# ─── متغیرهای محیطی — هرگز نباید در مخزن باشند ───
+# .env حاوی توکن MCP و شناسه افیلیت است. اگر اشتباهی کامیت شود،
+# حتی بعد از حذف هم در تاریخچه‌ی گیت باقی می‌ماند.
+.env
+.env.*
+!.env.example
+
+# ─── کلید و گواهی ───
+*.pem
+*.key
+*.crt
+*.p12
+
+# ─── لاگ‌ها ───
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# ─── داده‌ی تولیدشده در زمان اجرا ───
+/src/data/subscribers.json
+
+# ─── فایل‌های ابزار ───
+next-env.d.ts
+tsconfig.tsbuildinfo
+.vercel
+.eslintcache
+
+# ─── سیستم‌عامل و ادیتور ───
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

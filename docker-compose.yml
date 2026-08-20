@@ -1,0 +1,87 @@
+# ============================================================================
+#  PsyG — استقرار پروداکشن
+#
+#  اجرا:  docker compose up -d --build
+#
+#  دو مسیر برای رساندن ترافیک به اپ وجود دارد:
+#
+#   الف) Cloudflare Tunnel (پیشنهادی — همان چیزی که برای n8n استفاده می‌کنی)
+#        نیازی به باز کردن پورت ۸۰/۴۴۳ و گرفتن گواهی نیست.
+#        کانتینر cloudflared از شبکه‌ی psyg-net به اپ می‌رسد.
+#
+#   ب) Nginx روی خود سرور
+#        از طریق 127.0.0.1:3000
+#
+#  هر دو مسیر هم‌زمان کار می‌کنند؛ لازم نیست یکی را انتخاب کنی.
+#  در هیچ حالتی اپ روی اینترنت مستقیم باز نمی‌شود.
+# ============================================================================
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        # این‌ها در زمان بیلد لازم‌اند چون NEXT_PUBLIC_* در باندل جاسازی
+        # می‌شود. گذاشتنشان پایین‌تر در `environment` بی‌فایده است —
+        # آنجا زمان اجراست و دیگر کسی نمی‌خواندشان.
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_GOOGLE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_VERIFICATION:-}
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+    image: psyg-web:latest
+    container_name: psyg-web
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      # این‌ها سمت سرور خوانده می‌شوند، پس زمان اجرا کافی است.
+      # یعنی برای عوض کردنشان نیازی به بیلد دوباره نیست — فقط restart.
+      N8N_SUBSCRIBE_WEBHOOK_URL: ${N8N_SUBSCRIBE_WEBHOOK_URL:-}
+      PSYG_MCP_TOKEN: ${PSYG_MCP_TOKEN:-}
+      # توکن اندپوینت ورود داده از n8n. اگر خالی باشد، اندپوینت غیرفعال است.
+      PSYG_INGEST_TOKEN: ${PSYG_INGEST_TOKEN:-}
+      # وبهوک دستیار خرید. اگر خالی باشد، دستیار پاسخ ۵۰۳ می‌دهد
+      # و پیام صادقانه نشان می‌دهد — نه جواب از پیش نوشته.
+      N8N_ASSISTANT_WEBHOOK_URL: ${N8N_ASSISTANT_WEBHOOK_URL:-}
+      # رمز پنل مدیریت. اگر خالی باشد، /admin کاملاً بسته است.
+      PSYG_ADMIN_PASSWORD: ${PSYG_ADMIN_PASSWORD:-}
+      # توکن اندپوینت محتوا — عمداً جدا از PSYG_INGEST_TOKEN
+      PSYG_CONTENT_TOKEN: ${PSYG_CONTENT_TOKEN:-}
+      # توکن خواندن فهرست مشترکان — عمداً جدا از بقیه، چون این یکی
+      # نشانی ایمیل آدم‌های واقعی را برمی‌گرداند
+      PSYG_SUBSCRIBERS_TOKEN: ${PSYG_SUBSCRIBERS_TOKEN:-}
+      # مسیر ذخیره‌ی کاتالوگ و تاریخچه‌ی قیمت
+      PSYG_DATA_DIR: /data
+
+    volumes:
+      # کاتالوگ محصولات و تاریخچه‌ی قیمت اینجا می‌ماند.
+      # بدون این، هر بار `docker compose up --build` تاریخچه پاک می‌شد و
+      # نمودارها دوباره از صفر شروع می‌کردند.
+      - psyg-data:/data
+
+    # فقط لوکال‌هاست — از بیرون سرور مستقیم قابل دسترسی نیست
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    # شبکه‌ی مشترک تا کانتینر cloudflared بتواند با نام `psyg-web` صدایش بزند
+    networks:
+      - psyg-net
+
+    # سقف منابع تا یک درخواست سنگین کل سرور را نخواباند
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  psyg-data:
+    name: psyg-data
+
+networks:
+  psyg-net:
+    name: psyg-net

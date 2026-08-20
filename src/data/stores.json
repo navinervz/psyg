@@ -1,0 +1,51 @@
+[
+  {
+    "id": "digikala",
+    "displayName": "دیجی‌کالا",
+    "logo": "/stores/digikala.svg",
+    "url": "https://www.digikala.com",
+    "active": true
+  },
+  {
+    "id": "snappshop",
+    "displayName": "اسنپ‌شاپ",
+    "logo": "/stores/snappshop.svg",
+    "url": "https://snappshop.ir",
+    "active": true
+  },
+  {
+    "id": "technolife",
+    "displayName": "تکنولایف",
+    "logo": "/stores/technolife.svg",
+    "url": "https://technolife.ir",
+    "active": false
+  },
+  {
+    "id": "apexvision",
+    "displayName": "اپکس‌ویژن",
+    "logo": "/stores/apexvision.svg",
+    "url": "https://apexvision.ir",
+    "active": false
+  },
+  {
+    "id": "bamilo",
+    "displayName": "بامیلو",
+    "logo": "/stores/bamilo.svg",
+    "url": "https://bamilo.com",
+    "active": false
+  },
+  {
+    "id": "okala",
+    "displayName": "اکالا",
+    "logo": "/stores/okala.svg",
+    "url": "https://okala.com",
+    "active": false
+  },
+  {
+    "id": "zanbil",
+    "displayName": "زنبیل",
+    "logo": "/stores/zanbil.svg",
+    "url": "https://zanbil.ir",
+    "active": false
+  }
+]
