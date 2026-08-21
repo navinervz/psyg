@@ -103,11 +103,48 @@ if (-not (Test-Path $zip)) {
 
 Step 2 "Uploading (server password required)"
 
+# ---------------------------------------------------------------------
+# Retry the upload
+# ---------------------------------------------------------------------
+# This link drops often enough that a single attempt is not a fair test
+# of whether the upload can succeed. It has already failed here once
+# with "Connection closed by <host>" partway through a 500 KB transfer,
+# after a full green test run -- twenty minutes of work thrown away by
+# a few dropped packets.
+#
+# Retrying is safe. scp either transfers the whole file or leaves a
+# partial one that the next attempt overwrites, and the remote script
+# does not run until the upload reports success. The worst case is a
+# wasted minute.
+#
+# Each attempt asks for the password again, which is annoying and is
+# the clearest argument yet for setting up key authentication.
+#
 # scp spells the port flag -P, ssh spells it -p. Same keepalives though.
-scp -o ServerAliveInterval=15 -o ServerAliveCountMax=8 -P $port $zip "${server}:/opt/"
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Upload failed. Nothing was changed on the server." -ForegroundColor Red
+$uploaded = $false
+
+foreach ($attempt in 1..3) {
+    if ($attempt -gt 1) {
+        Write-Host ""
+        Write-Host "Upload attempt $attempt of 3..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 3
+    }
+
+    scp -o ServerAliveInterval=15 -o ServerAliveCountMax=8 -P $port $zip "${server}:/opt/"
+
+    if ($LASTEXITCODE -eq 0) {
+        $uploaded = $true
+        break
+    }
+
+    Write-Host "  attempt $attempt failed" -ForegroundColor Yellow
+}
+
+if (-not $uploaded) {
+    Write-Host ""
+    Write-Host "Upload failed three times. Nothing was changed on the server." -ForegroundColor Red
+    Write-Host "The connection is the likely cause, not the archive." -ForegroundColor Yellow
     exit 1
 }
 
@@ -186,6 +223,27 @@ for required in src/app/page.tsx src/lib/data.ts package.json; do
     exit 1
   fi
 done
+
+# ---------------------------------------------------------------------
+# Restore the execute bit on shell scripts
+# ---------------------------------------------------------------------
+# The deploy archive is built on Windows, and a Windows zip does not
+# carry Unix permission bits. So every unzip lands these files as 644,
+# without the execute bit.
+#
+# That silently broke the nightly backup. The cron entry existed, the
+# script existed, running it by hand worked -- everything looked fine.
+# The only evidence was two lines in a log nobody reads:
+#
+#   /bin/sh: 1: /opt/psyg/scripts/backup.sh: Permission denied
+#
+# Two nights, two failures, zero automated backups, no alert. A chmod
+# by hand would fix it until the next deploy undid it again.
+#
+# The cron entry now calls `bash <script>`, which does not need the bit
+# at all. This chmod is the second layer: it means anyone who runs a
+# script directly gets the behaviour they expect.
+chmod +x scripts/*.sh 2>/dev/null || true
 
 echo "--- rebuilding ---"
 docker compose up -d --build

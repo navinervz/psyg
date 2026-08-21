@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { ChangeBadge, RankBadge } from "@/components/ui/Badge";
+import { RankBadge, StandingBadge } from "@/components/ui/Badge";
 import { ProductThumb } from "@/components/ui/ProductThumb";
 import { PriceBlock } from "@/components/deals/PriceBlock";
 import { PriceSparkline } from "@/components/deals/PriceSparkline";
@@ -11,7 +11,7 @@ import { TrackButton } from "@/components/deals/TrackButton";
 import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { BuyButton } from "@/components/deals/BuyButton";
 import { gsap, useGSAP, prefersReducedMotion } from "@/animations/gsap";
-import { formatRank, priceDelta, priceTrend } from "@/lib/format";
+import { formatRank, priceDelta, priceStanding, priceTrend } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { Product } from "@/lib/types";
 
@@ -25,7 +25,16 @@ export function DealCard({
   showRank?: boolean;
 }) {
   const scope = useRef<HTMLElement>(null);
-  const delta = priceDelta(product.previousPrice, product.currentPrice);
+
+  /*
+    معیار کارت «چقدر زیر سقف اخیر» است، نه «چقدر نسبت به دیروز».
+
+    تغییر روزانه تقریباً همیشه صفر بود، پس هر ۸۰ محصول برچسب «تازه»
+    می‌گرفتند و صفحه‌ی فرصت‌ها هیچ فرصتی نشان نمی‌داد — در حالی که
+    صفحه‌ی همان محصول می‌گفت «نزدیک کف بازه». توضیح کامل در
+    `priceStanding`.
+  */
+  const standing = priceStanding(product.history, product.currentPrice);
 
   /*
     سه‌حالته، نه دوحالته.
@@ -34,11 +43,13 @@ export function DealCard({
     تغییرش صفر است در دسته‌ی «گران شده» می‌افتاد: قیمت قرمز، حاشیه‌ی
     قرمز، نمودار قرمز.
 
-    در صفحه‌ی فرصت‌ها این یعنی پنج کارت از شش تا قرمز بودند بدون اینکه
-    قیمت هیچ‌کدام بالا رفته باشد. هم اطلاعات غلطی می‌داد هم صفحه را
-    ترسناک می‌کرد.
+    حالا رنگ سبز از `standing` می‌آید، ولی قرمز همچنان از تغییر روزانه:
+    اگر قیمت امروز واقعاً بالا رفته، پنهان کردنش هم به همان اندازه
+    نادرست است.
   */
-  const trend = priceTrend(delta);
+  const trend = standing.known
+    ? "drop"
+    : priceTrend(priceDelta(product.previousPrice, product.currentPrice));
 
   // تیلت سه‌بعدی در هاور
   useGSAP(
@@ -146,7 +157,7 @@ export function DealCard({
             className="-ms-1.5"
           />
         )}
-        <ChangeBadge delta={delta} />
+        <StandingBadge standing={standing} />
       </div>
 
       {/* تصویر */}
@@ -180,8 +191,15 @@ export function DealCard({
 
       {/* قیمت */}
       <div className="mt-auto flex min-w-0 justify-center text-center">
+        {/*
+          قیمت خط‌خورده، سقف ثبت‌شده‌ی خودمان است نه قیمت دیروز.
+
+          قیمت دیروز معمولاً با امروز برابر بود، پس چیزی خط نمی‌خورد و
+          کارت هیچ نشانی از افت نمی‌داد. وقتی افتی نداریم، همچنان
+          `currentPrice` پاس داده می‌شود تا `PriceBlock` چیزی نشان ندهد.
+        */}
         <PriceBlock
-          previousPrice={product.previousPrice}
+          previousPrice={standing.known ? standing.high : product.currentPrice}
           currentPrice={product.currentPrice}
           trend={trend}
         />

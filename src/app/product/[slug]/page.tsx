@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
-import { ChangeBadge } from "@/components/ui/Badge";
+import { StandingBadge } from "@/components/ui/Badge";
 import { ProductThumb } from "@/components/ui/ProductThumb";
 import { StoreTag } from "@/components/deals/StoreTag";
 import { BuyButton } from "@/components/deals/BuyButton";
@@ -16,7 +16,13 @@ import { BuyVerdictCard } from "@/components/product/BuyVerdictCard";
 import { AffiliateNotice } from "@/components/product/AffiliateNotice";
 import { getCategory, getProduct, relatedProducts } from "@/lib/data";
 import { analyzePrice } from "@/lib/analysis";
-import { formatPrice, priceDelta, priceTrend, toFaDigits } from "@/lib/format";
+import {
+  formatPrice,
+  priceDelta,
+  priceStanding,
+  priceTrend,
+  toFaDigits,
+} from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
@@ -94,8 +100,10 @@ export default async function ProductPage({
   const product = getProduct(slug);
   if (!product) notFound();
 
-  const delta = priceDelta(product.previousPrice, product.currentPrice);
-  const trend = priceTrend(delta);
+  const standing = priceStanding(product.history, product.currentPrice);
+  const trend = standing.known
+    ? "drop"
+    : priceTrend(priceDelta(product.previousPrice, product.currentPrice));
   const verdict = analyzePrice(product);
   const related = relatedProducts(product, 6);
   const category = getCategory(product.category);
@@ -184,18 +192,18 @@ export default async function ProductPage({
                       {category.label}
                     </Link>
                   )}
-                  <ChangeBadge delta={delta} showLabel />
+                  <StandingBadge standing={standing} showLabel />
                 </div>
 
                 <div className="flex flex-wrap items-end gap-3">
                   {/*
-                    قیمت خط‌خورده فقط وقتی معنا دارد که واقعاً بیشتر
-                    باشد. برای محصول تازه، `previousPrice` برابر
-                    `currentPrice` است و نمایشش یعنی جعل تخفیف.
+                    قیمت خط‌خورده، بالاترین قیمتی است که خودمان ثبت
+                    کرده‌ایم — نه قیمت دیروز و نه «قیمت مصرف‌کننده»‌ی
+                    اعلامی فروشگاه.
                   */}
-                  {product.previousPrice > product.currentPrice && (
+                  {standing.known && (
                     <span className="text-sm text-low line-through nums-fa">
-                      {formatPrice(product.previousPrice)}
+                      {formatPrice(standing.high)}
                     </span>
                   )}
                   <span
@@ -211,9 +219,24 @@ export default async function ProductPage({
                   <span className="pb-1 text-xs text-mid">تومان</span>
                 </div>
 
-                <p className="text-[11px] text-low nums-fa">
-                  قیمت خط‌خورده مربوط به {toFaDigits(7)} روز پیش است.
-                </p>
+                {/*
+                  این جمله قبلاً دو اشکال داشت و هر دو در سایت زنده
+                  دیده می‌شد.
+
+                  یک: عدد ۷ دستی نوشته شده بود، در حالی که مبنای
+                  مقایسه قیمت یکی دو روز پیش بود. دو: هیچ شرطی نداشت،
+                  پس روی محصولی که اصلاً قیمت خط‌خورده نداشت هم چاپ
+                  می‌شد — جمله‌ای درباره‌ی چیزی که وجود نداشت.
+
+                  حالا هم شرط دارد و هم تاریخش از خود تاریخچه می‌آید.
+                */}
+                {standing.known && standing.daysAgo !== null && (
+                  <p className="text-[11px] text-low nums-fa">
+                    {standing.daysAgo === 0
+                      ? "قیمت خط‌خورده مربوط به امروز است."
+                      : `بالاترین قیمت ثبت‌شده، ${toFaDigits(standing.daysAgo)} روز پیش بود.`}
+                  </p>
+                )}
 
                 <div className="flex items-center gap-3">
                   <BuyButton

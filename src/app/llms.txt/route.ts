@@ -1,6 +1,6 @@
 import { products } from "@/lib/data";
 import { categories } from "@/lib/reference";
-import { priceDelta } from "@/lib/format";
+import { priceStanding } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
 
 /**
@@ -34,10 +34,19 @@ const MAX_LISTED = 40;
 export async function GET() {
   const list = [...products];
 
+  /*
+    افت‌ها بر اساس فاصله تا سقف ثبت‌شده، نه تغییر روزانه.
+
+    با معیار قبلی این فهرست تقریباً همیشه خالی بود و فایل به مدل‌های
+    هوش مصنوعی می‌گفت «هیچ محصولی افت قیمت ثبت‌شده ندارد» — در حالی که
+    محصولاتی ۱۱٪ زیر سقف خودشان بودند و صفحه‌ی همان محصول هم همین را
+    می‌گفت. یعنی بدترین جای ممکن برای اشتباه: جایی که مدل‌ها داده را
+    برمی‌دارند و جای دیگری نقل می‌کنند.
+  */
   const drops = list
-    .map((p) => ({ p, delta: priceDelta(p.previousPrice, p.currentPrice) }))
-    .filter((x) => x.delta < 0)
-    .sort((a, b) => a.delta - b.delta)
+    .map((p) => ({ p, standing: priceStanding(p.history, p.currentPrice) }))
+    .filter((x) => x.standing.known)
+    .sort((a, b) => b.standing.belowHigh - a.standing.belowHigh)
     .slice(0, MAX_LISTED);
 
   const byCategory = categories.map((c) => {
@@ -83,10 +92,11 @@ export async function GET() {
       "کافی برای مقایسه نداریم، نه اینکه قیمت‌ها ثابت مانده‌اند.",
     );
   } else {
-    for (const { p, delta } of drops) {
-      const percent = Math.abs(Math.round(delta));
+    for (const { p, standing } of drops) {
+      const percent = Math.round(standing.belowHigh);
+      const high = standing.high.toLocaleString("en-US");
       lines.push(
-        `- [${p.title}](${SITE_URL}/product/${p.slug}) — ${p.currentPrice.toLocaleString("en-US")} تومان، ${percent}٪ کمتر`,
+        `- [${p.title}](${SITE_URL}/product/${p.slug}) — ${p.currentPrice.toLocaleString("en-US")} تومان، ${percent}٪ زیر سقف ثبت‌شده (${high} تومان)`,
       );
     }
   }

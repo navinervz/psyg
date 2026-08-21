@@ -5,7 +5,7 @@ import { PackageSearch } from "lucide-react";
 import { DealCard } from "@/components/deals/DealCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useRevealOnScroll } from "@/animations/useRevealOnScroll";
-import { priceDelta } from "@/lib/format";
+import { priceDelta, priceStanding } from "@/lib/format";
 import { categories } from "@/lib/reference";
 import { cn } from "@/lib/cn";
 import type { CategoryId, Product } from "@/lib/types";
@@ -71,9 +71,25 @@ export function DealGrid({
       if (sort === "cheapest") return a.currentPrice - b.currentPrice;
       if (sort === "most-expensive") return b.currentPrice - a.currentPrice;
 
-      const da = priceDelta(a.previousPrice, a.currentPrice);
-      const db = priceDelta(b.previousPrice, b.currentPrice);
-      return sort === "biggest-rise" ? db - da : da - db;
+      /*
+        «بیشترین کاهش» بر اساس فاصله تا سقف اخیر مرتب می‌شود.
+
+        قبلاً روی تغییر روزانه بود که برای تقریباً همه صفر است — یعنی
+        این دکمه هیچ کاری نمی‌کرد و ترتیب همان ترتیب کاتالوگ می‌ماند.
+
+        «بیشترین افزایش» همچنان تغییر روزانه است، چون افزایش یعنی
+        «همین حالا گران شد» و آن واقعاً یک رویداد روزانه است.
+      */
+      if (sort === "biggest-rise") {
+        return (
+          priceDelta(b.previousPrice, b.currentPrice) -
+          priceDelta(a.previousPrice, a.currentPrice)
+        );
+      }
+
+      const da = priceStanding(a.history, a.currentPrice).belowHigh;
+      const db = priceStanding(b.history, b.currentPrice).belowHigh;
+      return db - da;
     });
   }, [items, category, sort]);
 

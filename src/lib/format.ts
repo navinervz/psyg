@@ -65,6 +65,102 @@ export function priceTrend(delta: number): PriceTrend {
   return delta < 0 ? "drop" : "rise";
 }
 
+/**
+ * جایگاه قیمت امروز نسبت به سقف بازه‌ی ثبت‌شده.
+ *
+ * ─────────────────────────────────────────────────────────────────────
+ * چرا این معیار، و نه تغییر روزانه
+ * ─────────────────────────────────────────────────────────────────────
+ * تا امروز عددِ روی کارت‌ها `priceDelta(previousPrice, currentPrice)`
+ * بود، یعنی «چقدر نسبت به آخرین باری که دیدیم فرق کرده». قیمت‌ها
+ * روزبه‌روز تقریباً ثابت‌اند، پس آن عدد تقریباً همیشه صفر می‌شد.
+ *
+ * نتیجه‌اش روی سایت زنده دیده شد: هر ۸۰ محصول برچسب «تازه» داشتند،
+ * صفحه‌ی «بهترین فرصت‌ها» هیچ فرصتی نشان نمی‌داد، مرتب‌سازی «بیشترین
+ * کاهش» روی ستونی کار می‌کرد که برای همه صفر بود، و `llms.txt` به
+ * مدل‌های هوش مصنوعی می‌گفت «هیچ محصولی افت قیمت ثبت‌شده ندارد».
+ *
+ * و همان لحظه صفحه‌ی همان محصول می‌گفت «الان وقت خوبیه، نزدیک کف
+ * بازه‌ای» — چون تحلیل صفحه‌ی محصول کل تاریخچه را می‌دید. یعنی عدد
+ * درست محاسبه می‌شد ولی هیچ‌جا که به چشم بیاید نمایش داده نمی‌شد.
+ *
+ * ─────────────────────────────────────────────────────────────────────
+ * چرا سقفِ خودمان، نه «قیمت قبل از تخفیفِ» فروشگاه
+ * ─────────────────────────────────────────────────────────────────────
+ * فروشگاه عددی به‌عنوان قیمت مصرف‌کننده اعلام می‌کند که گاهی ساختگی
+ * است — در داده‌ی واقعی افیلیو تخفیف‌های ۹۴٪ و ۹۷٪ دیده شد. تکیه بر
+ * آن یعنی بازنشر ادعای فروشنده.
+ *
+ * سقفی که اینجا استفاده می‌شود قیمتی است که **خودمان** ثبت کرده‌ایم؛
+ * پس هر درصدی که نشان می‌دهیم پشتوانه‌ی اندازه‌گیری دارد.
+ */
+export type PriceStanding = {
+  /** آیا داده‌ی کافی برای هر ادعایی داریم */
+  known: boolean;
+  /** درصد پایین‌تر از سقف — همیشه صفر یا مثبت */
+  belowHigh: number;
+  /** بالاترین قیمت ثبت‌شده */
+  high: number;
+  /** تاریخ ISO آخرین باری که قیمت روی آن سقف بود */
+  highAt: string | null;
+  /** چند روز از آن روز گذشته */
+  daysAgo: number | null;
+};
+
+export function priceStanding(
+  history: { t: string; price: number }[],
+  currentPrice: number,
+  now: Date = new Date(),
+): PriceStanding {
+  const unknown: PriceStanding = {
+    known: false,
+    belowHigh: 0,
+    high: currentPrice,
+    highAt: null,
+    daysAgo: null,
+  };
+
+  // یک نقطه یعنی فقط می‌دانیم قیمت امروز چند است. مقایسه‌ای در کار
+  // نیست و هر عددی که بسازیم از هوا آمده.
+  if (!Array.isArray(history) || history.length < 2) return unknown;
+
+  let high = -Infinity;
+  let highAt: string | null = null;
+
+  for (const point of history) {
+    if (!point || typeof point.price !== "number" || point.price <= 0) continue;
+    /*
+      `>=` عمدی است، نه `>`.
+
+      وقتی قیمت چند روز روی سقف مانده، تاریخِ آخرین بار درست‌تر از
+      اولین بار است: «۲ روز پیش این‌قدر بود» به کاربر کمک می‌کند،
+      «۲۹ روز پیش این‌قدر بود» او را گمراه می‌کند.
+    */
+    if (point.price >= high) {
+      high = point.price;
+      highAt = point.t;
+    }
+  }
+
+  if (high <= 0 || !highAt) return unknown;
+
+  const belowHigh = ((high - currentPrice) / high) * 100;
+
+  // قیمت امروز بالاتر از سقف یعنی خودِ امروز سقف است — افت نداریم.
+  if (belowHigh < MIN_MEANINGFUL_DELTA) {
+    return { ...unknown, high, highAt, daysAgo: null };
+  }
+
+  const daysAgo = Math.max(
+    0,
+    Math.floor(
+      (now.getTime() - new Date(`${highAt}T00:00:00Z`).getTime()) / 86400000,
+    ),
+  );
+
+  return { known: true, belowHigh, high, highAt, daysAgo };
+}
+
 /** زمان نسبی فارسی از یک ISO string */
 export function timeAgo(iso: string, now: Date = new Date()): string {
   const diffMs = now.getTime() - new Date(iso).getTime();
