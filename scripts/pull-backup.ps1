@@ -53,7 +53,7 @@ if (-not (Test-Path $localDir)) {
 }
 
 Write-Host ""
-Write-Host "Finding the newest backup (server password required)" -ForegroundColor Cyan
+Write-Host "Finding the newest backup" -ForegroundColor Cyan
 
 # Base64 for the same reason as deploy.ps1: PowerShell rewrites LF to
 # CRLF when piping into a native process, and quotes inside a command
@@ -79,7 +79,7 @@ $target = Join-Path $localDir $name
 
 Write-Host "  $name" -ForegroundColor Green
 Write-Host ""
-Write-Host "Downloading (server password required)" -ForegroundColor Cyan
+Write-Host "Downloading" -ForegroundColor Cyan
 
 scp -o ServerAliveInterval=15 -o ServerAliveCountMax=8 -P $port "${server}:${newest}" $target
 

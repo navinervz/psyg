@@ -33,7 +33,7 @@ $sshOpts = @(
 )
 
 Write-Host ""
-Write-Host "Reconnecting to the build (server password required)" -ForegroundColor Cyan
+Write-Host "Reconnecting to the build" -ForegroundColor Cyan
 Write-Host ""
 
 # Single-quoted: these variables are bash's, not PowerShell's.

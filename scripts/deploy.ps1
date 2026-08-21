@@ -101,7 +101,7 @@ if (-not (Test-Path $zip)) {
 
 # --- 2. upload --------------------------------------------------------
 
-Step 2 "Uploading (server password required)"
+Step 2 "Uploading"
 
 # ---------------------------------------------------------------------
 # Retry the upload
@@ -117,8 +117,9 @@ Step 2 "Uploading (server password required)"
 # does not run until the upload reports success. The worst case is a
 # wasted minute.
 #
-# Each attempt asks for the password again, which is annoying and is
-# the clearest argument yet for setting up key authentication.
+# Retries used to mean typing the root password again each time, which
+# is what finally justified setting up key authentication. With a key in
+# place a retry costs nothing but the transfer itself.
 #
 # scp spells the port flag -P, ssh spells it -p. Same keepalives though.
 
