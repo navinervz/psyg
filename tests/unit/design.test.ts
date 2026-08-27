@@ -228,43 +228,66 @@ describe("حرکت با تنظیمات کاربر سازگار است", () => {
       برای همیشه نامرئی نگه دارد — همان باگی که قبلاً با `will-reveal`
       داشتیم.
     */
-    const block = /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\n\}/.exec(CSS);
-    assert.ok(block, "بلوک reduced-motion پیدا نشد");
-    assert.match(block[0], /opacity:\s*1\s*!important/);
+    /*
+      همه‌ی بلوک‌های reduced-motion بررسی می‌شوند، نه فقط اولی.
+
+      نسخه‌ی قبلی `exec` می‌زد و اولین بلوک را می‌گرفت. وقتی بلوک
+      دومی برای هاله‌ی دکمه‌ی «شکار فرصت‌ها» بالاتر از آن اضافه شد،
+      تست قرمز شد — نه چون قاعده شکسته بود، بلکه چون تست جای اشتباهی
+      را نگاه می‌کرد.
+
+      تستی که به ترتیب قواعد در فایل حساس باشد، دیر یا زود به کسی
+      دروغ می‌گوید.
+    */
+    const blocks = [
+      ...CSS.matchAll(/@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\n\}/g),
+    ].map((m) => m[0]);
+
+    assert.ok(blocks.length > 0, "بلوک reduced-motion پیدا نشد");
+    assert.ok(
+      blocks.some((block) => /opacity:\s*1\s*!important/.test(block)),
+      "هیچ بلوک reduced-motion محتوای پنهان‌شده را برنمی‌گرداند",
+    );
   });
 });
 
 describe("هاور کارت حالت گیر باقی نمی‌گذارد", () => {
-  test("هر ویژگی متحرکِ هاور، بازگشت دارد", () => {
-    /*
-      اگر ماوس سریع از کارت بیرون برود و توییِن معکوس نباشد، کارت بالا
-      و کج گیر می‌کند — و چون همه‌ی کارت‌های شبکه همین رفتار را دارند،
-      کل صفحه به‌هم‌ریخته به‌نظر می‌رسد.
-    */
-    const card = readFileSync(
-      join(ROOT, "src", "components", "deals", "DealCard.tsx"),
-      "utf8",
-    );
+  /*
+    ─────────────────────────────────────────────────────────────────────
+    این بخش عوض شد، چون مسئله‌اش از بین رفت
+    ─────────────────────────────────────────────────────────────────────
+    قبلاً کارت یک تیلت سه‌بعدی با `pointermove` داشت و این تست‌ها مراقب
+    بودند که `pointerleave` همه‌ی مقادیر را صفر کند — وگرنه کارت بالا و
+    کج گیر می‌کرد.
 
-    assert.match(card, /pointerleave/, "رویداد خروج باید ثبت شود");
+    حالا خود تیلت برداشته شده و بازخورد هاور فقط نوار نئون است، که با
+    CSS کار می‌کند و با رفتن موس خودبه‌خود برمی‌گردد.
 
-    const onLeave = /const onLeave = \(\) => \{([\s\S]*?)\};/.exec(card);
-    assert.ok(onLeave, "تابع بازگشت پیدا نشد");
+    پس شرط تازه سخت‌گیرانه‌تر است: کارت اصلاً نباید ترنسفورم جاوااسکریپتی
+    هاور داشته باشد. حالت گیر وقتی ممکن نیست که حالتی وجود نداشته باشد.
+  */
+  const cardSource = () =>
+    readFileSync(join(ROOT, "src", "components", "deals", "DealCard.tsx"), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
 
-    for (const fn of ["rotX", "rotY", "lift"]) {
-      assert.match(
-        onLeave[1],
-        new RegExp(`${fn}\\(0\\)`),
-        `${fn} در بازگشت صفر نمی‌شود`,
+  test("هیچ ترنسفورم جاوااسکریپتی روی هاور نیست", () => {
+    const card = cardSource();
+
+    for (const marker of ["pointermove", "pointerenter", "pointerleave", "quickTo"]) {
+      assert.doesNotMatch(
+        card,
+        new RegExp(marker),
+        `${marker} برگشته — تیلت هاور دوباره اضافه شده`,
       );
     }
   });
 
-  test("هاور روی دستگاه لمسی اجرا نمی‌شود", () => {
-    const card = readFileSync(
-      join(ROOT, "src", "components", "deals", "DealCard.tsx"),
-      "utf8",
-    );
-    assert.match(card, /pointer: coarse/);
+  test("بازخورد هاور از نوار نئون می‌آید", () => {
+    /*
+      حذف تیلت بدون جایگزین یعنی کارت هیچ واکنشی به موس ندارد. این تست
+      مطمئن می‌شود جایگزینش سر جایش است.
+    */
+    assert.match(cardSource(), /neon-edge/, "کارت بازخورد هاور ندارد");
   });
 });

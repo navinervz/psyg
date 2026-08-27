@@ -25,7 +25,21 @@ export function SectionHeader({
       {actionHref && (
         <Link
           href={actionHref}
-          className="group inline-flex items-center gap-1 text-xs font-semibold text-accent transition-opacity hover:opacity-75"
+          /*
+            ─────────────────────────────────────────────────────────
+            ناحیه‌ی لمسی، نه فقط ناحیه‌ی متن
+            ─────────────────────────────────────────────────────────
+            اندازه‌گیری روی سایت زنده نشان داد این لینک ۱۶ تا ۱۸
+            پیکسل ارتفاع دارد — یعنی روی گوشی باید دقیقاً روی متن
+            ۱۲ پیکسلی زد. این تیتر در همه‌ی سکشن‌ها هست، پس همان
+            خطا ده‌ها بار روی هر صفحه تکرار می‌شد.
+
+            `after` ناحیه‌ی لمسی را به ۴۴ پیکسل می‌رساند بدون اینکه
+            هم‌ترازی تیتر با متن به‌هم بخورد. بزرگ کردن خود لینک با
+            پدینگ، `items-center` را جابه‌جا می‌کرد و تیتر هر سکشن
+            کمی پایین می‌افتاد.
+          */
+          className="group relative inline-flex items-center gap-1 text-xs font-semibold text-accent transition-opacity hover:opacity-75 after:absolute after:-inset-x-2 after:-top-3 after:-bottom-3 after:content-['']"
         >
           {actionLabel}
           <Plus className="size-3 transition-transform group-hover:rotate-90" />

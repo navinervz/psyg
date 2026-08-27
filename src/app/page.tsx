@@ -7,8 +7,11 @@ import { BestDealsSection } from "@/components/deals/BestDealsSection";
 import { FeatureStrip } from "@/components/marketing/FeatureStrip";
 import { PartnerMarquee } from "@/components/marketing/PartnerMarquee";
 import { Sidebar } from "@/components/sidebar/Sidebar";
-import { AffiliateNotice } from "@/components/product/AffiliateNotice";
-import { alerts, newestProducts, suggestions } from "@/lib/data";
+import { MobileHero } from "@/components/mobile/MobileHero";
+import { MobileCategoryRail } from "@/components/mobile/MobileCategoryRail";
+import { MobileTopDrop } from "@/components/mobile/MobileTopDrop";
+import { activeCategoryIds, alerts, newestProducts, products } from "@/lib/data";
+import { HERO_HEADLINE_TEXT } from "@/lib/site";
 
 /**
  * رندر در زمان درخواست — چون این صفحه از کاتالوگ زنده می‌خواند.
@@ -30,6 +33,14 @@ import { alerts, newestProducts, suggestions } from "@/lib/data";
 export const dynamic = "force-dynamic";
 
 export default function HomePage() {
+  /*
+    فقط دسته‌هایی که محصول دارند به چیپ‌ها و نوار موبایل می‌روند.
+
+    اینجا حساب می‌شود چون هر دو کامپوننت کلاینتی‌اند و به کاتالوگ دسترسی
+    ندارند. صفحه سروری است و `products` را می‌بیند.
+  */
+  const liveCategories = activeCategoryIds();
+
   return (
     <>
       <BackdropGlow />
@@ -50,15 +61,55 @@ export default function HomePage() {
         */}
         <main
           dir="ltr"
-          className="shell flex flex-col gap-5 pt-4 pb-10 xl:flex-row xl:items-start"
+          className="shell flex flex-col gap-3 pt-3 pb-10 sm:gap-5 sm:pt-4 xl:flex-row xl:items-start"
         >
-          <div dir="rtl" className="flex w-full flex-1 flex-col gap-5">
+          {/*
+            فاصله‌ی بخش‌ها روی موبایل کمتر است.
+
+            `gap-5` روی صفحه‌ی ۳۶۰ پیکسلی زیادی بود: بین هیرو و اولین
+            محصول یک نوار خالی می‌ماند که کاربر باید بی‌دلیل از رویش
+            رد شود. روی دسکتاپ که ستون پهن‌تر است و کنارش سایدبار
+            هست، همان فاصله درست به‌نظر می‌رسد.
+          */}
+          <div dir="rtl" className="flex w-full flex-1 flex-col gap-3 sm:gap-5">
+            {/*
+              تنها `<h1>` صفحه.
+
+              دیده نمی‌شود چون هر دو هیرو خودشان همین متن را بزرگ نشان
+              می‌دهند — ولی در درخت دسترس‌پذیری و برای گوگل هست، و
+              چون یکی است دیگر ابهامی نمی‌سازد.
+            */}
+            <h1 className="sr-only">{HERO_HEADLINE_TEXT}</h1>
+
             <AiSearchBar />
-            <HeroSection suggestions={suggestions} />
+
+            {/*
+              ─────────────────────────────────────────────────────────
+              دو هیرو، نه یک هیروی ریسپانسیو
+              ─────────────────────────────────────────────────────────
+              نسخه‌ی قبلی یک `HeroSection` بود که سعی می‌کرد هر دو کار
+              را بکند. روی گوشی نتیجه‌اش کارتی شد که کل صفحه‌ی اول را
+              می‌گرفت: تیتر، ربات بزرگ، چیپ‌های دسته‌بندی و پنل
+              پیشنهادها همه زیر هم. کاربر باید تا ته اسکرول می‌کرد تا
+              اولین محصول را ببیند.
+
+              این دو چیدمان واقعاً متفاوت‌اند، نه یک چیدمان در دو
+              اندازه. جدا کردنشان از تلنبار کردن کلاس ریسپانسیو روی هم
+              صادق‌تر است — و هرکدام می‌تواند بدون شکستن دیگری عوض شود.
+
+              بخش‌های زیرش هم فقط موبایلی‌اند: نوار دسته‌بندی جای
+              چیپ‌ها را می‌گیرد و کارت افقی یک محصول را برجسته می‌کند.
+              روی دسکتاپ چیپ‌ها و سایدبار همان کار را می‌کنند.
+            */}
+            <MobileHero className="lg:hidden" />
+            <HeroSection className="hidden lg:block" categoryIds={liveCategories} />
+
+            <MobileCategoryRail ids={liveCategories} />
+            <MobileTopDrop products={products} />
+
             <BestDealsSection />
             <FeatureStrip />
             <PartnerMarquee />
-            <AffiliateNotice />
           </div>
 
           <Sidebar alerts={alerts} newest={newestProducts(3)} />

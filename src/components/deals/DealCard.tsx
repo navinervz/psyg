@@ -10,7 +10,6 @@ import { StoreTag } from "@/components/deals/StoreTag";
 import { TrackButton } from "@/components/deals/TrackButton";
 import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { BuyButton } from "@/components/deals/BuyButton";
-import { gsap, useGSAP, prefersReducedMotion } from "@/animations/gsap";
 import { formatRank, priceDelta, priceStanding, priceTrend } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { Product } from "@/lib/types";
@@ -51,77 +50,24 @@ export function DealCard({
     ? "drop"
     : priceTrend(priceDelta(product.previousPrice, product.currentPrice));
 
-  // تیلت سه‌بعدی در هاور
-  useGSAP(
-    () => {
-      const el = scope.current;
-      if (!el || prefersReducedMotion()) return;
+  /*
+    ══════════════════════════════════════════════════════════════════
+    اینجا قبلاً یک تیلت سه‌بعدی با pointermove بود — برداشته شد
+    ══════════════════════════════════════════════════════════════════
+    کارت با حرکت موس تا ۹ درجه در دو محور می‌چرخید و ۴ پیکسل بالا
+    می‌آمد. حالا نوار نئون همان کار را می‌کند: می‌گوید موس کجاست.
 
-      /*
-        تیلت سه‌بعدی فقط با موس.
+    دو افکت برای یک پیام، یعنی هیچ‌کدام تمیز دیده نمی‌شوند. چرخش سه‌بعدی
+    عنوان و قیمت را هم کج می‌کرد و خواندنشان را سخت‌تر — و در گرید شش
+    ستونه که کارت‌ها به هم نزدیک‌اند، شبکه موج‌دار به‌نظر می‌رسید.
 
-        `pointermove` روی گوشی هم شلیک می‌شود — یعنی موقع اسکرول، انگشت
-        از روی کارت رد می‌شد و کارت می‌چرخید. کاربر فکر می‌کند صفحه خراب
-        است، در حالی که «افکت هاور» روی دستگاهی اجرا می‌شد که اصلاً هاور
-        ندارد.
-      */
-      if (window.matchMedia("(pointer: coarse)").matches) return;
+    نکته‌ی مهم برای آینده: این تیلت با `useGSAP` روی خود کارت اجرا
+    می‌شد، نه با CSS. دور اول دنبالش در فایل CSS گشتم و `preserve-3d`
+    را متهم کردم — که واقعاً هم بی‌مصرف بود ولی علت نبود. افکتی که در
+    جاوااسکریپت زندگی می‌کند، در جستجوی CSS پیدا نمی‌شود.
+  */
 
-      const rotX = gsap.quickTo(el, "rotationX", { duration: 0.6, ease: "power3" });
-      const rotY = gsap.quickTo(el, "rotationY", { duration: 0.6, ease: "power3" });
-
-      /*
-        بلند شدن کارت هنگام هاور.
-
-        تیلت به‌تنهایی کارت را می‌چرخاند ولی حس «برداشته شدن از صفحه»
-        نمی‌داد. چهار پیکسل بالا آمدن همان چیزی است که مغز به‌عنوان
-        نزدیک‌تر شدن می‌خواند و کل افکت را از چرخش تخت به عمق واقعی
-        تبدیل می‌کند.
-
-        `quickTo` استفاده شده نه `gsap.to` چون در صفحه‌ی فرصت‌ها ده‌ها
-        کارت هم‌زمان هاورپذیرند؛ ساختن توییِن تازه به‌ازای هر رویداد،
-        زباله‌ی حافظه تولید می‌کند.
-
-        فقط `y` انیمیت می‌شود که روی ترد کامپوزیتور می‌ماند — نه
-        `width` یا `margin` که باعث چیدمان دوباره‌ی کل صفحه می‌شوند.
-      */
-      const lift = gsap.quickTo(el, "y", { duration: 0.25, ease: "power2.out" });
-
-      const onMove = (e: PointerEvent) => {
-        const rect = el.getBoundingClientRect();
-        const px = (e.clientX - rect.left) / rect.width - 0.5;
-        const py = (e.clientY - rect.top) / rect.height - 0.5;
-        rotY(px * 9);
-        rotX(-py * 9);
-      };
-
-      const onEnter = () => lift(-4);
-
-      /*
-        بازگشت روی `pointerleave` حیاتی است.
-
-        اگر ماوس سریع از کارت بیرون برود و توییِن معکوس نباشد، کارت
-        بالا و کج گیر می‌کند — و چون کارت بعدی هم همین را دارد، شبکه
-        به‌هم‌ریخته به‌نظر می‌رسد.
-      */
-      const onLeave = () => {
-        rotX(0);
-        rotY(0);
-        lift(0);
-      };
-
-      el.addEventListener("pointerenter", onEnter);
-      el.addEventListener("pointermove", onMove);
-      el.addEventListener("pointerleave", onLeave);
-
-      return () => {
-        el.removeEventListener("pointerenter", onEnter);
-        el.removeEventListener("pointermove", onMove);
-        el.removeEventListener("pointerleave", onLeave);
-      };
-    },
-    { scope },
-  );
+  // تیلت برداشته شد؛ بازخورد هاور فقط از نوار نئون می‌آید
 
   return (
     <article
@@ -131,19 +77,47 @@ export function DealCard({
       data-product-slug={product.slug}
       className={cn(
         "deal-card will-reveal group relative flex flex-col gap-3 rounded-[20px] border bg-surface p-4",
-        "transition-[border-color,box-shadow] duration-300 [transform-style:preserve-3d]",
         /*
-          حالت «unknown» عمداً همان حاشیه‌ی خنثای بقیه‌ی سایت را دارد.
+          ─────────────────────────────────────────────────────────────
+          چرا preserve-3d برداشته شد
+          ─────────────────────────────────────────────────────────────
+          گرید والد `perspective: 1100px` دارد و انیمیشن ورود کارت را با
+          `rotateX` می‌چرخاند. `preserve-3d` روی خود کارت یعنی فرزندانش
+          هم در همان فضای سه‌بعدی رندر شوند.
 
-          قرمز فقط وقتی معنا دارد که قیمت واقعاً بالا رفته باشد. اگر
-          نمی‌دانیم، هیچ ادعایی نمی‌کنیم — و صفحه هم آرام می‌ماند.
+          تا وقتی کارت هیچ فرزند لایه‌داری نداشت، این بی‌اثر بود. با
+          آمدن `neon-edge` دو شبه‌عنصر اضافه شد و کارت زیر موس در فضای
+          سه‌بعدی والد کج و کشیده می‌شد — بیشتر برای کارت‌های دور از
+          مرکز گرید، چون مبدأ پرسپکتیو وسط است.
+
+          کارت برای چرخش خودش به `preserve-3d` نیازی ندارد؛ آن فقط برای
+          سه‌بعدی کردن *فرزندان* است و ما چنین چیزی نمی‌خواهیم.
+
+          `isolate` جایش می‌نشیند: بافت لایه‌بندی می‌سازد تا نوار نئون
+          داخل کارت بماند، ولی هیچ فضای سه‌بعدی‌ای نمی‌سازد.
         */
-        trend === "drop" &&
-          "border-line hover:border-accent/45 hover:shadow-[0_0_44px_rgba(163,230,53,0.18)]",
-        trend === "rise" &&
-          "border-danger/25 hover:border-danger/50 hover:shadow-[0_0_44px_rgba(255,77,77,0.16)]",
-        trend === "unknown" &&
-          "border-line hover:border-mid/40 hover:shadow-[0_0_44px_rgba(255,255,255,0.06)]",
+        "transition-[border-color] duration-300 isolate",
+        /*
+          ─────────────────────────────────────────────────────────────
+          چرا هاله‌ی جعبه‌ای برداشته شد
+          ─────────────────────────────────────────────────────────────
+          قبلاً هر حالت یک `hover:shadow-[0_0_44px_...]` داشت. حالا
+          `neon-edge` همان کار را بهتر می‌کند و اگر هر دو با هم بمانند،
+          دو نور با شدت و رنگ متفاوت روی یک لبه می‌افتند و کثیف می‌شود.
+
+          حاشیه می‌ماند چون رنگش معنا دارد: قرمز یعنی قیمت بالا رفته.
+        */
+        trend === "drop" && "border-line hover:border-accent/45",
+        trend === "rise" && "border-danger/25 hover:border-danger/50",
+        trend === "unknown" && "border-line hover:border-mid/40",
+        /*
+          نوار نئونی فقط روی کارت‌هایی که قیمتشان بالا نرفته.
+
+          روی کارت «گران‌تر شده» یک قاب سبزِ چرخان، پیام را وارونه
+          می‌کند: چشم سبز را «فرصت» می‌خواند در حالی که کارت دارد هشدار
+          می‌دهد.
+        */
+        trend !== "rise" && "neon-edge",
       )}
     >
       {/* ردیف بالا: مطابق دیزاین رنک چپ و درصد تغییر راست */}

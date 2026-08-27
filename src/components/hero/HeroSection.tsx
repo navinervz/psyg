@@ -2,15 +2,45 @@ import { Card } from "@/components/ui/Card";
 import { HeroCopy } from "@/components/hero/HeroCopy";
 import { RobotMascot } from "@/components/hero/RobotMascot";
 import { CategoryChips } from "@/components/hero/CategoryChips";
-import { SuggestionsPanel } from "@/components/hero/SuggestionsPanel";
-import type { Suggestion } from "@/lib/types";
+import { cn } from "@/lib/cn";
 
-export function HeroSection({ suggestions }: { suggestions: Suggestion[] }) {
+/**
+ * هیروی دسکتاپ.
+ *
+ * روی موبایل جای خود را به `MobileHero` می‌دهد. این چیدمان — تیتر و ربات
+ * و چیپ‌های دسته‌بندی — وقتی ستون پهن باشد کنار هم می‌نشینند و درست کار
+ * می‌کند؛ در عرض گوشی همه زیر هم می‌افتند و کل صفحه‌ی اول را می‌گیرند.
+ */
+export function HeroSection({
+  className,
+  categoryIds,
+}: {
+  className?: string;
+  /** دسته‌هایی که واقعاً محصول دارند — از سرور می‌آید */
+  categoryIds?: string[];
+}) {
   return (
-    <Card glow as="section" className="p-4 sm:p-6 md:p-8">
-      {/* پنل پیشنهادها از md کنار متن می‌آید؛ در xl که سایدبار برمی‌گردد
-          ستون اصلی باریک‌تر می‌شود، پس عرض پنل هم کمی کم می‌شود. */}
-      <div className="grid gap-6 md:grid-cols-[1fr_260px] md:gap-8 lg:grid-cols-[1fr_300px]">
+    <Card glow as="section" className={cn("p-4 sm:p-6 md:p-8", className)}>
+      {/*
+        ─────────────────────────────────────────────────────────────────
+        چرا پنل «پیشنهادهای برای شما» حذف شد
+        ─────────────────────────────────────────────────────────────────
+        آن پنل جمله‌هایی مثل «۴ مدل تبلت این هفته ارزان‌تر شدن، ۷۵٪ کمتر»
+        نشان می‌داد. بعداً معلوم شد آن درصدها تخفیفِ فروشگاه بودند نه افت
+        قیمت در طول زمان — یعنی برجسته‌ترین بخش صفحه‌ی اصلی، نادرست‌ترین
+        عددِ سایت را داشت.
+
+        ریشه‌اش در `affilio.ts` اصلاح شد و حالا پنل فقط وقتی حرفی دارد که
+        تاریخچه‌ی واقعی جمع شود — که یعنی روزهای اول خالی می‌ماند.
+
+        جایش را چیزی گرفت که هیچ ادعای عددی نمی‌کند: حلقه‌ی رصد دور ربات.
+        شکلِ کاری را نشان می‌دهد که انجام می‌شود، بدون اینکه درباره‌ی
+        محصول مشخصی چیزی بگوید.
+
+        پراپ `suggestions` هم حذف شد. پراپی که هیچ‌کس نمی‌خواندش، دفعه‌ی
+        بعد کسی را وادار می‌کند دنبال استفاده‌اش بگردد.
+      */}
+      <div className="grid gap-6">
         {/* ستون اصلی */}
         <div className="flex min-w-0 flex-col gap-7">
           {/* ستون ربات با کسر تعریف شده نه `auto`؛ با `auto` ربات ۲۶۰ پیکسلی
@@ -34,11 +64,8 @@ export function HeroSection({ suggestions }: { suggestions: Suggestion[] }) {
 
             جستجوی واقعی در `AiSearchBar` است و گفتگو در دستیار شناور.
           */}
-          <CategoryChips />
+          <CategoryChips ids={categoryIds} />
         </div>
-
-        {/* پنل پیشنهادها */}
-        <SuggestionsPanel suggestions={suggestions} />
       </div>
     </Card>
   );

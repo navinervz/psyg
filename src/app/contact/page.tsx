@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Mail, MessageSquare, Store } from "lucide-react";
 import { PageShell, PageTitle } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
+import { ContactForm } from "@/components/contact/ContactForm";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -51,6 +52,16 @@ export default function ContactPage() {
             <p className="text-[11px] text-low">{hint}</p>
           </Card>
         ))}
+      </div>
+
+      {/*
+        فرم بعد از کارت‌ها می‌آید، نه قبلشان.
+
+        کارت‌ها به کاربر می‌گویند *چه چیزی* بنویسد؛ فرم جای نوشتنش است.
+        برعکسش یعنی کاربر اول با یک کادر خالی روبه‌رو شود.
+      */}
+      <div className="pt-2">
+        <ContactForm />
       </div>
     </PageShell>
   );

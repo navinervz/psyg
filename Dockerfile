@@ -79,6 +79,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# اسکریپت‌های نگه‌داری داده.
+#
+# فقط همین یکی کپی می‌شود، نه کل `scripts/` — بقیه اسکریپت‌های استقرارند و
+# آدرس و پورت سرور در آن‌هاست؛ جایشان داخل ایمیج نیست.
+#
+# اینجاست چون تنها جایی که والیوم `/data` مانت است، همین کانتینر است:
+#   docker exec psyg-web node /app/scripts/clean-history.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/clean-history.mjs ./scripts/clean-history.mjs
+
 # پوشه‌ی داده‌ی پایدار (کاتالوگ و تاریخچه‌ی قیمت).
 #
 # مالکیتش همین‌جا به کاربر غیرروت داده می‌شود. وقتی داکر یک volume نام‌دار

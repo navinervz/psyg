@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { products } from "@/lib/data";
 import { readCatalog } from "@/lib/catalog-store";
+import { catalogSource } from "@/lib/data";
 
 /**
  * بررسی سلامت — برای سرویس‌های مانیتورینگ بیرونی.
@@ -72,12 +73,26 @@ export async function GET() {
     problems.push("catalog_unreadable");
   }
 
+  const source = catalogSource();
+  if (source === "seed") problems.push("serving_seed_data");
+  if (source === "empty") problems.push("catalog_missing");
+
   const healthy = problems.length === 0;
 
   return NextResponse.json(
     {
       ok: healthy,
       products: productCount,
+      /*
+        منبع داده صریح گزارش می‌شود.
+
+        `problems` فقط وقتی «serving_seed_data» می‌گفت که شناسه‌ها
+        الگوی نمونه داشتند — یعنی یک تشخیص غیرمستقیم. این فیلد خودِ
+        تصمیم را می‌گوید: live یعنی کاتالوگ واقعی خوانده شد، empty
+        یعنی خوانده نشد و عمداً چیزی سرو نمی‌کنیم، seed یعنی داده‌ی
+        نمونه — که روی سرور نباید هیچ‌وقت دیده شود.
+      */
+      catalogSource: source,
       catalogAgeHours: ageHours === null ? null : Math.round(ageHours),
       problems,
     },

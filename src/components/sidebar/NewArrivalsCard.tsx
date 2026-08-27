@@ -70,6 +70,7 @@ export function NewArrivalsCard({ products }: { products: Product[] }) {
 
   return (
     <Card
+      neon
       className="p-4"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}

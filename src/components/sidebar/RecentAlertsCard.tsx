@@ -11,7 +11,7 @@ import type { PriceAlert } from "@/lib/types";
 /** کامپوننت سروری — هشدارها به‌صورت prop می‌آیند */
 export function RecentAlertsCard({ alerts }: { alerts: PriceAlert[] }) {
   return (
-    <Card className="will-reveal">
+    <Card neon className="will-reveal">
       <div className="flex items-center justify-between px-5 pt-5">
         <h3 className="text-base font-extrabold text-hi">هشدارهای اخیر</h3>
         <Link

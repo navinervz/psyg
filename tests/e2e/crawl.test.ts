@@ -446,7 +446,17 @@ describe("دسترس‌پذیری پایه", () => {
   });
 
   test("هر صفحه دقیقاً یک h1 دارد", async () => {
-    for (const route of ["/deals", "/stores", "/about", "/contact", "/privacy"]) {
+    /*
+      `/` عمداً اضافه شد.
+
+      صفحه‌ی اصلی از این فهرست جا مانده بود و نتیجه‌اش این شد که دو
+      `<h1>` داشته باشد بدون اینکه کسی بفهمد: هر دو هیرو — موبایلی و
+      دسکتاپی — یکی داشتند و هر دو در DOM بودند.
+
+      فهرست دستیِ مسیرها همیشه همین ریسک را دارد؛ ولی مهم‌ترین صفحه‌ی
+      سایت لااقل باید در آن باشد.
+    */
+    for (const route of ["/", "/deals", "/stores", "/about", "/contact", "/privacy"]) {
       const html = await getHtml(route);
       const count = [...html.matchAll(/<h1[\s>]/g)].length;
       assert.equal(count, 1, `${route} تعداد h1: ${count}`);

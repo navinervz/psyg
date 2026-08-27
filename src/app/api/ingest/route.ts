@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { fetchAllProducts } from "@/lib/affilio";
-import { mergeHistory, readCatalog, writeCatalog } from "@/lib/catalog-store";
+import { mergeCatalog, readCatalog, writeCatalog } from "@/lib/catalog-store";
 
 /**
  * اندپوینت ورود داده — فقط برای ورک‌فلوی n8n.
@@ -92,17 +92,32 @@ export async function POST(request: Request) {
     }
 
     const existing = await readCatalog();
-    const merged = mergeHistory(products, existing.products);
+    const merged = mergeCatalog(products, existing);
 
     await writeCatalog({
       updatedAt: new Date().toISOString(),
-      products: merged,
+      products: merged.products,
+      archive: merged.archive,
     });
+
+    /*
+      این دو عدد در گزارش هستند چون بار قبل دقیقاً همین‌ها را نداشتیم.
+
+      وقتی فید چرخید و تاریخچه‌ها دور ریخته شدند، پاسخ ingest همچنان
+      `ok: true` بود و می‌گفت ۸۰ محصول نوشته شد — که درست بود و هیچ‌چیز
+      از فاجعه را نشان نمی‌داد. `archived` و `rejoined` همان چیزی‌اند که
+      آن شب باید دیده می‌شد.
+    */
+    const rejoined = merged.products.filter(
+      (product) => product.historyFrom,
+    ).length;
 
     return NextResponse.json(
       {
         ok: true,
-        productsWritten: merged.length,
+        productsWritten: merged.products.length,
+        archived: merged.archive.length,
+        rejoined,
         // اگر بعضی ویجت‌ها پاسخ ندادند، در همان گزارش دیده شود
         failures,
       },

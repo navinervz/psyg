@@ -189,10 +189,43 @@ describe("امنیت اندپوینت محتوا", () => {
     assert.match(ROUTE, /timingSafeEqual/);
   });
 
-  test("هر دو متد احراز هویت می‌خواهند", () => {
-    const methods = ROUTE.match(/export async function (GET|POST)/g);
-    const guards = ROUTE.match(/authorize\(request\.headers\.get\("authorization"\)\)/g);
-    assert.equal(guards?.length, methods?.length, "متدی بدون احراز هویت مانده");
+  test("هر متدی که اضافه شود احراز هویت می‌خواهد", () => {
+    /*
+      ─────────────────────────────────────────────────────────────────
+      چرا شمردن کافی نبود
+      ─────────────────────────────────────────────────────────────────
+      نسخه‌ی قبلی تعداد متدها را با تعداد نگهبان‌ها مقایسه می‌کرد و اسم
+      خودش «هر دو متد» بود — یعنی عدد ۲ را فرض کرده بود.
+
+      وقتی `DELETE` اضافه شد، تست قرمز شد نه چون متدی بی‌نگهبان مانده
+      بلکه چون سه شد. تستی که به *تعداد* حساس است، هر بار که چیزی
+      اضافه شود سر و صدا می‌کند حتی اگر قاعده رعایت شده باشد.
+
+      حالا هر متد جداگانه سنجیده می‌شود. اضافه کردن متد پنجم بی‌صدا
+      رد نمی‌شود، ولی اضافه کردن متدِ درست هم قرمز نمی‌کند.
+    */
+    const methods = [
+      ...ROUTE.matchAll(/export async function (GET|POST|PUT|PATCH|DELETE)\s*\(/g),
+    ].map((m) => m[1]);
+
+    assert.ok(methods.length > 0, "هیچ متدی در روت پیدا نشد");
+
+    for (const method of methods) {
+      /*
+        بدنه‌ی هر متد تا شروع متد بعدی (یا انتهای فایل) برداشته می‌شود
+        و همان‌جا باید نگهبان باشد — نه جای دیگری در فایل.
+      */
+      const start = ROUTE.indexOf(`export async function ${method}`);
+      const rest = ROUTE.slice(start + 1);
+      const nextIndex = rest.search(/export async function (GET|POST|PUT|PATCH|DELETE)\s*\(/);
+      const body = nextIndex === -1 ? rest : rest.slice(0, nextIndex);
+
+      assert.match(
+        body,
+        /authorize\(request\.headers\.get\("authorization"\)\)/,
+        `متد ${method} بدون احراز هویت است`,
+      );
+    }
   });
 });
 

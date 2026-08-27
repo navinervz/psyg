@@ -1,0 +1,31 @@
+{
+  "name": "سای‌جی — رصد قیمت",
+  "short_name": "سای‌جی",
+  "description": "قیمت کالای دیجیتال را در فروشگاه‌های ایرانی رصد می‌کنیم و بهترین لحظه‌ی خرید را خبر می‌دهیم.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08090A",
+  "theme_color": "#08090A",
+  "lang": "fa",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

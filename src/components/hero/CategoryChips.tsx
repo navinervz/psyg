@@ -24,17 +24,32 @@ const ICONS: Record<string, LucideIcon> = {
   cable: Cable,
 };
 
-/** چیپ‌های دسته‌بندی زیر هیرو — هرکدام به صفحه‌ی دسته می‌روند */
-export function CategoryChips() {
+/**
+ * چیپ‌های دسته‌بندی زیر هیرو — هرکدام به صفحه‌ی دسته می‌روند.
+ *
+ * `ids` فهرست دسته‌هایی است که واقعاً محصول دارند. صفحه‌ی سرور آن را
+ * حساب می‌کند و اینجا فقط فیلتر می‌شود؛ این کامپوننت کلاینتی است و به
+ * کاتالوگ دسترسی ندارد.
+ *
+ * چرا لازم شد: دسته‌ی «ساعت هوشمند» صفر محصول داشت و چیپش کاربر را به
+ * صفحه‌ای خالی می‌برد. چیپی که به بن‌بست می‌رسد، بدتر از نبودن چیپ است —
+ * کاربر یک بار کلیک می‌کند و دفعه‌ی بعد به بقیه‌ی چیپ‌ها هم اعتماد نمی‌کند.
+ *
+ * وقتی ویجت آن دسته پر شود، چیپ خودبه‌خود برمی‌گردد. هیچ فهرست دستی‌ای
+ * نیست که کسی یادش برود به‌روزش کند.
+ */
+export function CategoryChips({ ids }: { ids?: string[] }) {
   const scope = useRevealOnScroll<HTMLDivElement>({
     y: 20,
     stagger: 0.06,
     duration: 0.6,
   });
 
+  const shown = ids ? categories.filter((c) => ids.includes(c.id)) : categories;
+
   return (
     <div ref={scope} className="flex flex-wrap gap-2.5">
-      {categories.slice(0, 5).map((category) => {
+      {shown.slice(0, 5).map((category) => {
         const Icon = ICONS[category.icon] ?? Laptop;
         return (
           <Chip

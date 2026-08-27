@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Store as StoreIcon } from "lucide-react";
 import { PageShell, PageTitle } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
-import { AffiliateNotice } from "@/components/product/AffiliateNotice";
 import { productsByStore, stores } from "@/lib/data";
 import { toFaDigits } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -112,7 +111,6 @@ export default function StoresPage() {
         </p>
       </Card>
 
-      <AffiliateNotice className="mt-2" />
     </PageShell>
   );
 }

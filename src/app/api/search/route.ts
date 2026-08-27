@@ -42,6 +42,18 @@ export async function GET(request: Request) {
       title: product.title,
       store: product.store,
       category: product.category,
+      /*
+        تصویر هم می‌آید.
+
+        نتیجه‌های فقط‌متنی خواندن را کند می‌کنند: کاربر باید عنوان بلند
+        فارسی را بخواند تا بفهمد کدام است. تصویر همان کار را در یک نگاه
+        می‌کند.
+
+        `category` از قبل بود و حالا کارِ دومی هم می‌کند — اگر تصویر
+        بارگذاری نشد، آیکون دسته جایش می‌نشیند. همان الگویی که در کارت
+        گفتگو هم لازم شد.
+      */
+      image: product.image,
       currentPrice: product.currentPrice,
       delta: Math.round(priceDelta(product.previousPrice, product.currentPrice)),
     }));

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageShell, PageTitle } from "@/components/layout/PageShell";
 import { DealGrid } from "@/components/deals/DealGrid";
-import { AffiliateNotice } from "@/components/product/AffiliateNotice";
 import { categories, getCategory, products } from "@/lib/data";
 import { toFaDigits } from "@/lib/format";
 import type { CategoryId } from "@/lib/types";
@@ -66,7 +65,6 @@ export default async function DealsPage({
         </div>
       </section>
 
-      <AffiliateNotice className="mt-2" />
     </PageShell>
   );
 }

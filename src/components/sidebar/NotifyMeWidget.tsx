@@ -32,7 +32,7 @@ export function NotifyMeWidget() {
   );
 
   return (
-    <Card glow className="will-reveal relative p-5">
+    <Card glow neon className="will-reveal relative p-5">
       <div ref={scope}>
         <div className="notify-glow pointer-events-none absolute -top-16 -right-10 size-40 rounded-full bg-accent/22 blur-3xl" />
       </div>

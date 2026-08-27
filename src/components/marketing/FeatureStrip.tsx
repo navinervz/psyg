@@ -42,8 +42,25 @@ export function FeatureStrip() {
           return (
             <div
               key={feature.id}
-              /* مطابق دیزاین آیکون سمت چپ متن قرار می‌گیرد */
-              className={`feature-item will-reveal group flex min-w-0 flex-row-reverse items-start gap-4 xl:px-4 ${
+              /*
+                ─────────────────────────────────────────────────────────
+                چرا ترتیب آیکون بین موبایل و دسکتاپ فرق می‌کند
+                ─────────────────────────────────────────────────────────
+                در چیدمان راست‌به‌چپ، `flex-row-reverse` اولین فرزند
+                (آیکون) را سمت چپ می‌گذارد. روی دسکتاپ که چهار ستون
+                باریک است، آیکون و متن کنار هم می‌مانند و درست دیده
+                می‌شود — همان چیزی که در دیزاین هست.
+
+                روی موبایل ولی کارت تمام‌عرض است و متن تا لبه‌ی راست
+                کشیده می‌شود. آیکون به لبه‌ی چپ پرتاب می‌شود و وسطشان
+                یک فاصله‌ی خالی بزرگ می‌ماند؛ چشم دیگر آیکون را به
+                عنوانش وصل نمی‌کند.
+
+                پس تا پیش از `xl`، آیکون در ابتدای سطر می‌نشیند — یعنی
+                سمت راست، چسبیده به عنوان. از `xl` به بعد همان چیدمان
+                دیزاین برمی‌گردد.
+              */
+              className={`feature-item will-reveal group flex min-w-0 items-start gap-4 xl:flex-row-reverse xl:px-4 ${
                 i > 0 ? "xl:border-e xl:border-line" : ""
               }`}
             >
@@ -51,7 +68,12 @@ export function FeatureStrip() {
                 <Icon className="size-6" strokeWidth={1.6} />
               </span>
 
-              <div className="flex min-w-0 flex-col gap-1.5">
+              {/*
+                `flex-1` لازم است: بدون آن، بلوک متن فقط به اندازه‌ی
+                محتوایش عرض می‌گیرد و در ستون پهن، عنوان و توضیح روی دو
+                عرض متفاوت می‌نشینند.
+              */}
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <h3 className="text-sm font-bold text-hi">{feature.title}</h3>
                 <p className="text-[11px] leading-relaxed text-mid">
                   {feature.description}

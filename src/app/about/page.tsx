@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Activity, BellRing, Heart, LineChart } from "lucide-react";
 import { PageShell, PageTitle } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
-import { AffiliateNotice } from "@/components/product/AffiliateNotice";
 
 export const metadata: Metadata = {
   title: "درباره ما",
@@ -67,7 +66,6 @@ export default function AboutPage() {
         </p>
       </Card>
 
-      <AffiliateNotice className="mt-2" />
     </PageShell>
   );
 }

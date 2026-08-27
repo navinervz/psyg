@@ -22,6 +22,11 @@ export default function robots(): MetadataRoute.Robots {
         "/account/",
         "/admin",
         "/unsubscribe",
+        /*
+          صفحه‌ی تشخیص viewport. موقتی است و بعد از حل شدن باگ نوار
+          پایین حذف می‌شود — ولی تا آن موقع نباید ایندکس شود.
+        */
+        "/debug/",
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

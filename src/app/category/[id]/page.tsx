@@ -4,8 +4,12 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { PageShell, PageTitle } from "@/components/layout/PageShell";
 import { DealGrid } from "@/components/deals/DealGrid";
-import { AffiliateNotice } from "@/components/product/AffiliateNotice";
-import { categories, getCategory, productsByCategory } from "@/lib/data";
+import {
+  activeCategoryIds,
+  categories,
+  getCategory,
+  productsByCategory,
+} from "@/lib/data";
 import { toFaDigits } from "@/lib/format";
 import type { CategoryId } from "@/lib/types";
 
@@ -49,6 +53,7 @@ export default async function CategoryPage({
   if (!category) notFound();
 
   const items = productsByCategory(category.id as CategoryId);
+  const live = activeCategoryIds() as string[];
 
   return (
     <PageShell>
@@ -76,8 +81,15 @@ export default async function CategoryPage({
       <section className="mt-4">
         <h2 className="mb-3 text-sm font-bold text-hi">دسته‌های دیگر</h2>
         <div className="flex flex-wrap gap-2">
+          {/*
+            دسته‌ی خالی اینجا لینک نمی‌گیرد.
+
+            این بخش هم برای کاربر است هم برای خزنده‌ی گوگل. لینک دادن به
+            صفحه‌ای که هیچ محصولی ندارد، هر دو را به بن‌بست می‌برد — و برای
+            گوگل یعنی صفحه‌ی بی‌محتوا از داخل خود سایت تبلیغ می‌شود.
+          */}
           {categories
-            .filter((c) => c.id !== category.id)
+            .filter((c) => c.id !== category.id && live.includes(c.id))
             .map((c) => (
               <Link
                 key={c.id}
@@ -90,7 +102,6 @@ export default async function CategoryPage({
         </div>
       </section>
 
-      <AffiliateNotice className="mt-2" />
     </PageShell>
   );
 }

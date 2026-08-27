@@ -13,7 +13,7 @@ import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { RevealGrid } from "@/components/deals/RevealGrid";
 import { PriceHistoryChart } from "@/components/product/PriceHistoryChart";
 import { BuyVerdictCard } from "@/components/product/BuyVerdictCard";
-import { AffiliateNotice } from "@/components/product/AffiliateNotice";
+import { HistorySourceNote } from "@/components/product/HistorySourceNote";
 import { getCategory, getProduct, relatedProducts } from "@/lib/data";
 import { analyzePrice } from "@/lib/analysis";
 import {
@@ -238,6 +238,22 @@ export default async function ProductPage({
                   </p>
                 )}
 
+                {/*
+                  وقتی تاریخچه از فروشگاه دیگری آمده، صفحه باید بگوید.
+
+                  فید افیلیو می‌چرخد و همان گوشی این هفته از فروشگاه دیگری
+                  می‌آید. تاریخچه‌اش را نگه می‌داریم — وگرنه نمودار هر بار
+                  از صفر شروع می‌شد و کل ادعای «رصد قیمت» بی‌معنا بود.
+
+                  ولی نگه داشتنش بدون گفتنش، یک ادعای ضمنی نادرست است:
+                  که همه‌ی آن قیمت‌ها از همین فروشگاه‌اند. این جمله همان
+                  ادعا را پس می‌گیرد.
+                */}
+                <HistorySourceNote
+                  from={product.historyFrom}
+                  current={product.store}
+                />
+
                 <div className="flex items-center gap-3">
                   <BuyButton
                     productId={product.id}
@@ -252,7 +268,6 @@ export default async function ProductPage({
                   </div>
                 </div>
 
-                <AffiliateNotice />
               </div>
             </div>
           </Card>

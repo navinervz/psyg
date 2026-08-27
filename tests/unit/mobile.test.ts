@@ -1,141 +1,163 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const read = (p: string) => readFileSync(join(ROOT, p), "utf8");
 
-/*
-  ─────────────────────────────────────────────────────────────────────
-  چرا این فایل وجود دارد
-  ─────────────────────────────────────────────────────────────────────
-  چیدمان موبایل در بررسی کد سالم به‌نظر می‌رسید: منو نقطه‌ی شکست درست
-  داشت، هدف لمسی ۴۴ پیکسل بود، پنل دستیار روی موبایل تمام‌صفحه می‌شد.
-  همه درست بودند.
-
-  ولی اسکرین‌شات گوشی واقعی دو چیز نشان داد که هیچ‌کدام از کد پیدا
-  نمی‌شدند:
-
-    ۱. پس‌زمینه‌ی ۹۵ درصدی منو، عکس‌های سفید محصولات را از پشت نشان
-       می‌داد. روی هیروی تیره بی‌عیب بود؛ وسط فهرست محصولات، کلمه‌ی
-       «فرصت‌ها» روی عکس یک گوشی می‌افتاد.
-
-    ۲. دکمه‌ی شناور دستیار با z-index کمتر، روی منوی باز دیده می‌شد.
-
-  درس مشترکشان: «کلاس‌های ریسپانسیو درست‌اند» با «روی گوشی درست دیده
-  می‌شود» یکی نیست.
-*/
-
-/*
-  کامنت‌ها را کنار می‌گذارد.
-
-  نسخه‌ی اول این تست کل فایل را می‌گشت و به کامنتی گیر کرد که توضیح
-  می‌داد چرا `backdrop-blur` حذف شده — یعنی تست، توضیحِ اصلاح را با
-  خودِ مشکل اشتباه گرفت.
-
-  کامنت‌های این پروژه عمداً مفصل‌اند و اسم چیزهایی را می‌برند که نباید
-  در کد باشند. هر تستی که سورس را می‌خواند باید اول آن‌ها را حذف کند.
-*/
+/** کامنت‌ها اسم چیزهایی را می‌برند که نباید در کد باشند */
 function withoutComments(source: string): string {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
-describe("منوی موبایل محتوای پشتش را نشان نمی‌دهد", () => {
-  const src = withoutComments(read("src/components/layout/MobileNav.tsx"));
+/*
+  ─────────────────────────────────────────────────────────────────────
+  چرا این فایل وجود دارد
+  ─────────────────────────────────────────────────────────────────────
+  چیدمان موبایل در بررسی کد سالم به‌نظر می‌رسید — نقطه‌های شکست درست،
+  هدف لمسی ۴۴ پیکسل، پنل دستیار تمام‌صفحه. همه درست بودند.
 
-  test("پس‌زمینه کاملاً مات است", () => {
+  ولی اسکرین‌شات گوشی واقعی چیزهایی نشان داد که از کد پیدا نمی‌شدند:
+  پس‌زمینه‌ی نیمه‌شفاف منو که عکس محصولات را از پشت نشان می‌داد، و
+  دکمه‌ی شناوری که با z-index کمتر روی منو می‌افتاد.
+
+  درسش این بود: «کلاس‌های ریسپانسیو درست‌اند» با «روی گوشی درست دیده
+  می‌شود» یکی نیست.
+*/
+
+describe("منوی همبرگری حذف شده", () => {
+  /*
+    مسیریابی موبایل حالا کار نوار پایین است.
+
+    این تست عمداً وقتی کسی همبرگری را برگرداند قرمز می‌شود. برگرداندنش
+    ممکن است روزی درست باشد — ولی باید تصمیم باشد، نه اینکه دو سیستم
+    مسیریابی هم‌زمان روی یک صفحه‌ی کوچک بنشینند.
+  */
+  test("کامپوننتش دیگر وجود ندارد", () => {
+    assert.ok(
+      !existsSync(join(ROOT, "src/components/layout/MobileNav.tsx")),
+      "MobileNav برگشته — اگر عمدی است، این تست را هم به‌روز کن",
+    );
+  });
+
+  test("هدر دیگر رندرش نمی‌کند", () => {
+    const header = withoutComments(read("src/components/layout/Header.tsx"));
+    assert.ok(!header.includes("MobileNav"), "هدر هنوز به منو ارجاع می‌دهد");
+  });
+
+  test("قاعده‌ی CSS مرده‌اش هم پاک شده", () => {
     /*
-      هر درجه‌ای از شفافیت روی این لایه یعنی عکس‌های سفید محصولات از
-      پشتش خوانده می‌شوند.
+      کلاس `menu-open` را فقط همان کامپوننت می‌گذاشت. ماندنش یعنی یک
+      قاعده که هیچ‌وقت فعال نمی‌شود و دفعه‌ی بعد کسی وقت می‌گذارد
+      بفهمد چرا کار نمی‌کند.
     */
-    assert.ok(
-      !/bg-night\/\d+/.test(src),
-      "پس‌زمینه‌ی منو نباید شفافیت داشته باشد",
-    );
-    assert.ok(
-      /className="fixed inset-0 z-\[\d+\] flex flex-col bg-night /.test(src),
-      "منو باید bg-night مات داشته باشد",
-    );
-  });
-
-  test("backdrop-blur ندارد", () => {
-    // پشت یک لایه‌ی مات چیزی برای محو کردن نیست، و همین بود که
-    // ترتیب چینش را روی سافاری به‌هم می‌ریخت.
-    assert.ok(
-      !src.includes("backdrop-blur"),
-      "backdrop-blur روی لایه‌ی مات هم بی‌فایده است هم مضر",
-    );
-  });
-});
-
-describe("دکمه‌ی دستیار روی منوی باز نمی‌افتد", () => {
-  test("منو هنگام باز شدن به بقیه‌ی سایت خبر می‌دهد", () => {
-    const src = read("src/components/layout/MobileNav.tsx");
-    assert.ok(
-      src.includes('classList.toggle("menu-open"'),
-      "MobileNav باید کلاس menu-open را روی html بگذارد",
-    );
-    assert.ok(
-      src.includes('classList.remove("menu-open")'),
-      "کلاس باید هنگام بسته شدن برداشته شود، وگرنه دکمه برای همیشه پنهان می‌ماند",
-    );
-  });
-
-  test("قاعده‌ی پنهان کردن در CSS هست", () => {
     const css = read("src/styles/globals.css");
-    assert.ok(
-      /html\.menu-open\s+\.assistant-fab\s*\{[^}]*display:\s*none/.test(css),
-      "بدون این قاعده، کلاس menu-open هیچ اثری ندارد",
-    );
+    assert.ok(!css.includes("menu-open"), "قاعده‌ی مرده در CSS مانده");
   });
 
-  test("قفل اسکرول هم برداشته می‌شود", () => {
-    const src = read("src/components/layout/MobileNav.tsx");
-    // یک منوی بسته که اسکرول را قفل نگه دارد، صفحه را کاملاً از کار
-    // می‌اندازد — بدترین حالت ممکن روی موبایل.
+  test("لینک‌های فرعی از دسترس خارج نشده‌اند", () => {
+    /*
+      فروشگاه‌ها، مجله و درباره‌ی ما در نوار پایین جا نمی‌شوند. تنها
+      دلیلی که حذف همبرگری چیزی را یتیم نمی‌کند، این است که فوتر
+      هر سه را دارد — و فوتر در همه‌ی صفحه‌هاست.
+    */
+    const footer = read("src/components/layout/Footer.tsx");
+    for (const href of ["/stores", "/mag", "/about"]) {
+      assert.ok(
+        footer.includes(href),
+        `${href} نه در نوار پایین است نه در فوتر — از دسترس موبایل خارج شده`,
+      );
+    }
+  });
+});
+
+describe("فیلد جستجو روی موبایل جا می‌شود", () => {
+  const src = withoutComments(read("src/components/hero/AiSearchBar.tsx"));
+
+  test("متن راهنما کوتاه است", () => {
+    /*
+      متن قبلی «دنبال چه محصولی هستی؟ قیمتش رو برات پیدا می‌کنم...»
+      بود و روی گوشی وسط جمله بریده می‌شد.
+
+      ۲۵ کاراکتر سقفی است که در باریک‌ترین حالت کامل دیده می‌شود.
+    */
+    /*
+      دو چیز باید کوتاه بمانند و هر دو روی همان یک خط می‌نشینند:
+      متن راهنمای فیلد، و جمله‌های نمونه‌ای که زیرش فهرست می‌شوند.
+
+      نسخه‌ی قبلی این تست هر رشته‌ی فارسیِ داخل فایل را می‌شمرد — یعنی
+      کلاس‌ها و متن JSX هم قاطی می‌شدند و با اولین بازنویسی قرمز شد.
+      تستی که نمی‌داند دقیقاً چه چیزی را می‌سنجد، دیر یا زود سر چیز
+      بی‌ربطی صدا می‌کند.
+    */
+    const placeholders = [...src.matchAll(/placeholder=\{[^}]*\}|placeholder="([^"]+)"/g)]
+      .map((m) => m[0])
+      .join(" ");
+    const quoted = [...placeholders.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+
+    const examples = src.match(/const EXAMPLES = \[([\s\S]*?)\]/)?.[1] ?? "";
+    const exampleTexts = [...examples.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+
+    const texts = [...quoted, ...exampleTexts];
+    assert.ok(texts.length >= 2, `فقط ${texts.length} متن پیدا شد`);
+
+    for (const text of texts) {
+      assert.ok(
+        text.length <= 30,
+        `«${text}» ${text.length} کاراکتر است و روی موبایل بریده می‌شود`,
+      );
+    }
+  });
+
+  test("دکمه و پدینگ روی موبایل کوچک‌ترند", () => {
+    // بدون این، حدود ۹۲ پیکسل از عرض ۳۶۰ قبل از تایپ مصرف می‌شد
+    assert.ok(src.includes("size-10") && src.includes("sm:size-12"));
+    assert.ok(src.includes("p-1.5 ps-4") && src.includes("sm:p-2.5 sm:ps-5"));
+  });
+
+  test("ورودی باعث زوم سافاری نمی‌شود", () => {
+    const input = read("src/components/ui/Input.tsx");
     assert.ok(
-      src.includes('document.body.style.overflow = ""'),
-      "قفل اسکرول باید در پاک‌سازی برداشته شود",
+      input.includes("text-base") && input.includes("sm:text-sm"),
+      "فونت زیر ۱۶ پیکسل روی iOS هنگام فوکوس صفحه را زوم می‌کند",
     );
   });
 });
 
-describe("پنل دستیار روی موبایل سرریز نمی‌کند", () => {
-  const src = read("src/components/chat/Assistant.tsx");
+describe("پنل گفتگو روی موبایل سرریز نمی‌کند", () => {
+  const src = read("src/components/hero/AiSearchBar.tsx");
 
-  test("روی موبایل تمام‌صفحه است، نه عرض ثابت", () => {
+  test("ارتفاعش سقف دارد و با dvh حساب می‌شود", () => {
     /*
-      عرض ۴۰۰ پیکسل روی گوشی ۳۶۰ پیکسلی یعنی اسکرول افقی. باید فقط از
-      نقطه‌ی شکست به بالا اعمال شود.
+      پنل قبلاً روی موبایل تمام‌صفحه بود چون دکمه‌ی شناور جای دیگری
+      نداشت. حالا زیر فیلد جستجو باز می‌شود، پس باید سقف داشته باشد —
+      وگرنه با چند پیام از پایین صفحه بیرون می‌زند.
+
+      `dvh` نه `vh`: نوار آدرس مرورگر موبایل باز و بسته می‌شود و با
+      `vh` پنل زیر آن گم می‌شد.
     */
-    assert.ok(
-      src.includes("sm:w-[400px]"),
-      "عرض ثابت باید پشت نقطه‌ی شکست باشد",
+    assert.match(
+      src,
+      /max-h-\[min\([^\]]*dvh/,
+      "پنل گفتگو باید سقف ارتفاع بر پایه‌ی dvh داشته باشد",
     );
     assert.ok(
-      !/(?<!sm:)\bw-\[400px\]/.test(src),
-      "عرض ثابت نباید بدون نقطه‌ی شکست اعمال شود",
+      !/\d+vh\b/.test(src.replace(/dvh/g, "")),
+      "vh روی موبایل ارتفاع را اشتباه حساب می‌کند",
     );
-    assert.ok(src.includes("inset-0"), "روی موبایل باید تمام‌صفحه باشد");
   });
 });
 
 describe("خودِ تست سالم است", () => {
-  test("الگوی شفافیت را واقعاً تشخیص می‌دهد", () => {
-    assert.ok(/bg-night\/\d+/.test("bg-night/95 backdrop-blur-xl"));
-    assert.ok(!/bg-night\/\d+/.test("bg-night lg:hidden"));
-  });
-
   test("حذف کامنت واقعاً کار می‌کند", () => {
     assert.equal(
-      withoutComments('/* backdrop-blur حذف شد */ const a = "x";').trim(),
+      withoutComments('/* MobileNav حذف شد */ const a = "x";').trim(),
       'const a = "x";',
     );
-    assert.ok(!withoutComments("// backdrop-blur\ncode()").includes("backdrop"));
-    // ولی کد واقعی را دست نزند
-    assert.ok(withoutComments('className="backdrop-blur-xl"').includes("backdrop"));
+    assert.ok(withoutComments("// MobileNav\ncode()").indexOf("MobileNav") < 0);
+    assert.ok(withoutComments("<MobileNav />").includes("MobileNav"));
   });
 });

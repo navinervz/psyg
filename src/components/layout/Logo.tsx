@@ -1,20 +1,31 @@
 import Link from "next/link";
-import { Sparkle } from "@/components/ui/Sparkle";
 import { Brand } from "@/components/ui/Brand";
+import { cn } from "@/lib/cn";
 
-export function Logo() {
+/**
+ * لوگوی هدر — فقط نام برند.
+ *
+ * ─────────────────────────────────────────────────────────────────────
+ * چرا نشان تصویری برداشته شد
+ * ─────────────────────────────────────────────────────────────────────
+ * قبلاً `icon-192.png` کنار نام می‌نشست، با این استدلال که کاربر باید
+ * همان نشانی را ببیند که در نتایج گوگل و روی صفحه‌ی خانه‌ی گوشی هست.
+ *
+ * استدلال درست بود ولی جایش اینجا نبود. نشان در تب مرورگر و در آیکون
+ * وب‌اپ خودش دیده می‌شود؛ تکرارش در هدر فقط نوار بالا را شلوغ می‌کرد و
+ * کنار یک نام فارسیِ کوتاه، وزن بصری را از خود نام می‌گرفت.
+ *
+ * نام برند به‌تنهایی قوی‌تر است. `Brand` همان کامپوننتی است که هرجای
+ * دیگر هم نام را می‌نویسد، پس لوگو و متن هیچ‌وقت از هم جدا نمی‌افتند.
+ */
+export function Logo({ className }: { className?: string } = {}) {
   return (
     <Link
       href="/"
-      className="group flex shrink-0 items-center gap-2"
+      className={cn("group flex shrink-0 items-center", className)}
       aria-label="سای‌جی — صفحه اصلی"
     >
-      <Sparkle className="size-7 text-accent transition-transform duration-500 group-hover:rotate-180 group-hover:scale-110" />
-      {/*
-        از همان کامپوننت `Brand` استفاده می‌شود تا لوگو و هرجای دیگری که
-        نام برند در متن می‌آید هیچ‌وقت از هم جدا نیفتند.
-      */}
-      <Brand className="text-xl tracking-tight sm:text-2xl" />
+      <Brand className="text-xl tracking-tight transition-opacity duration-300 group-hover:opacity-80 sm:text-2xl" />
     </Link>
   );
 }
